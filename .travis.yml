@@ -39,4 +39,5 @@ deploy:
   region: "us-west-2"
   app: "swe1app"
   env: "django-env1"
-  bucket_name: "the-target-S3-bucket"
+  bucket_name: "$AWS_BUCKET_NAME"
+  cleanup: true
