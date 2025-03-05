@@ -25,9 +25,18 @@ script:
   - coverage report
 
 after_success:
-  - coveralls
+  - coveralls --service=travis-pro
 
 # Only build these branches
 branches:
   only:
     - main
+
+deploy:
+  provider: elasticbeanstalk
+  access_key_id: $AWS_ACCESS_KEY_ID
+  secret_access_key: $AWS_SECRET_ACCESS_KEY
+  region: "us-west-2"
+  app: "swe1app"
+  env: "django-env1"
+  bucket_name: "the-target-S3-bucket"
