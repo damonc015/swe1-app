@@ -27,11 +27,6 @@ script:
 after_success:
   - coveralls --service=travis-pro
 
-# Only build these branches
-branches:
-  only:
-    - main
-
 deploy:
   provider: elasticbeanstalk
   access_key_id: $AWS_ACCESS_KEY_ID
