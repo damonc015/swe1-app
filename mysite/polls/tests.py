@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.utils import timezone
 from django.urls import reverse
 
-from .models import Question
+from .models import Question, Choice
 
 
 class QuestionModelTests(TestCase):
@@ -124,3 +124,64 @@ class QuestionDetailViewTests(TestCase):
         url = reverse("polls:detail", args=(past_question.id,))
         response = self.client.get(url)
         self.assertContains(response, past_question.question_text)
+
+
+class ResultsViewTests(TestCase):
+    def test_results_view_with_question(self):
+        """
+        The results view of a question should display the question's results.
+        """
+        past_question = create_question(question_text="Past Question.", days=-5)
+        url = reverse("polls:results", args=(past_question.id,))
+        response = self.client.get(url)
+        self.assertContains(response, past_question.question_text)
+
+
+class VoteTests(TestCase):
+    def setUp(self):
+        """Create a question and choices for testing votes"""
+        self.question = create_question(question_text="Test Question", days=0)
+        self.choice = Choice.objects.create(question=self.question, choice_text="Test Choice")
+
+    def test_vote_with_valid_choice(self):
+        """
+        Valid votes should redirect to results page
+        """
+        url = reverse("polls:vote", args=(self.question.id,))
+        response = self.client.post(url, {"choice": self.choice.id})
+        self.assertRedirects(response, reverse("polls:results", args=(self.question.id,)))
+
+    def test_vote_with_invalid_choice_id(self):
+        """
+        Invalid choice ID should return to voting form with error
+        """
+        url = reverse("polls:vote", args=(self.question.id,))
+        response = self.client.post(url, {"choice": 999})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "You didn&#x27;t select a choice.")
+
+    def test_vote_without_choice(self):
+        """
+        No choice selected should return to voting form with error
+        """
+        url = reverse("polls:vote", args=(self.question.id,))
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "You didn&#x27;t select a choice.")
+
+
+class QuestionMethodTests(TestCase):
+    def test_str_method(self):
+        """
+        Test the string representation of a Question
+        """
+        question = Question(question_text="Test Question")
+        self.assertEqual(str(question), "Test Question")
+
+    def test_was_published_recently_with_recent_question_edge(self):
+        """
+        Test was_published_recently() at exactly 24 hours ago
+        """
+        time = timezone.now() - datetime.timedelta(days=1)
+        question = Question(pub_date=time)
+        self.assertIs(question.was_published_recently(), False)
